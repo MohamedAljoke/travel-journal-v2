@@ -1,0 +1,126 @@
+service: travel-journal
+
+package:
+  individually: false
+  exclude:
+    - "**/*"
+  include:
+    - dist/**
+    - package.json
+    - node_modules/**
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    COGNITO_USER_POOL_ARN: ${param:COGNITO_USER_POOL_ARN}
+    DYNAMODB_TABLE_NAME: ${param:DYNAMODB_TABLE_NAME}
+    USER_IMAGES_DYNAMO_TABLE_ARN: ${param:USER_IMAGES_DYNAMO_TABLE_ARN}
+    NODE_ENVIRONMENT: ${env:NODE_ENVIRONMENT}
+    SENTRY_DSN: ${env:SENTRY_DSN}
+    S3_ASSET_TABLE: ${env:S3_ASSET_TABLE}
+
+functions:
+  main:
+    name: ${self:custom.lambdaNames.${self:provider.stage}}
+    handler: dist/main.handler
+    timeout: 10
+    role: LambdaExecutionRole
+    events:
+      - http:
+          path: /v1/version
+          method: GET
+          cors: true
+      - http:
+          path: /
+          method: ANY
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+      - http:
+          path: "{proxy+}"
+          method: ANY
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
+
+custom:
+  dotenv:
+    path: ${file(./.env.${self:provider.stage})}
+  lambdaNames:
+    dev: dev-travel-journal
+    stg: stg-travel-journal
+    prod: travel-journal
+  dynamoTableNames:
+    dev: dev-travel-journal-table
+    stg: stg-travel-journal-table
+    prod: travel-journal-table
+  s3BucketNames:
+    dev: dev-travel-journal-assets
+    stg: stg-travel-journal-assets
+    prod: travel-journal-assets
+
+resources:
+  Resources:
+    LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.lambdaNames.${self:provider.stage}}-role
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        Policies:
+          - PolicyName: NodeLambdaAuth
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - dynamodb:GetItem
+                    - dynamodb:PutItem
+                    - dynamodb:UpdateItem
+                    - dynamodb:DeleteItem
+                    - dynamodb:Scan
+                    - dynamodb:Query
+                  Resource:
+                    - ${param:USER_IMAGES_DYNAMO_TABLE_ARN}
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - s3:PutObject
+                    - s3:GetObject
+                  Resource:
+                    - Fn::Sub: arn:aws:s3:::${self:custom.s3BucketNames.${self:provider.stage}}/*
+                - Effect: Allow
+                  Action:
+                    - iot:*
+                  Resource: "*"
+
+    ApiGatewayAuthorizer:
+      Type: "AWS::ApiGateway::Authorizer"
+      Properties:
+        Name: ${self:service}-${self:provider.stage}-authorizer
+        Type: COGNITO_USER_POOLS
+        IdentitySource: method.request.header.Authorization
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ProviderARNs:
+          - ${param:COGNITO_USER_POOL_ARN}

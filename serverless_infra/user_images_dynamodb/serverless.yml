@@ -1,0 +1,45 @@
+service: travel-journal-user-images-dynamodb
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  dynamoTableNames:
+    dev: dev-travel-journal-table
+    stg: stg-travel-journal-table
+    prod: travel-journal-table
+
+resources:
+  Resources:
+    # DynamoDB Table
+    TravelJournalTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamoTableNames.${self:provider.stage}}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+
+  Outputs:
+    DynamodbTable:
+      Description: "DynamoDB table name"
+      Value:
+        Ref: TravelJournalTable
+
+    DynamodbTableArn:
+      Description: "DynamoDB table ARN"
+      Value:
+        Fn::GetAtt:
+          - TravelJournalTable
+          - Arn

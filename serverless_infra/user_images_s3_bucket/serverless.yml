@@ -1,0 +1,31 @@
+service: travel-journal-s3-bucket
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  s3BucketNames:
+    dev: dev-travel-journal-assets
+    stg: stg-travel-journal-assets
+    prod: travel-journal-assets
+
+resources:
+  Resources:
+    # s3 resources bucket
+    TravelJournalBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.s3BucketNames.${self:provider.stage}}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+
+  Outputs:
+    S3BucketName:
+      Description: "Name of the S3 bucket"
+      Value: ${self:custom.s3BucketNames.${self:provider.stage}}

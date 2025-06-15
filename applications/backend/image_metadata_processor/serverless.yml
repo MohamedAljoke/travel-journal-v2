@@ -1,0 +1,64 @@
+service: image-processor-details
+
+provider:
+  name: aws
+  runtime: provided.al2
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    DYNAMODB_TABLE: ${param:DYNAMODB_TABLE_NAME}
+    USER_IMAGES_BUCKET: ${param:USER_IMAGES_BUCKET}
+    USER_IMAGES_DYNAMO_TABLE: ${param:USER_IMAGES_DYNAMO_TABLE}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:PutItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+        - "dynamodb:Scan"
+        - "dynamodb:Query"
+      Resource:
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${param:USER_IMAGES_DYNAMO_TABLE}"
+    - Effect: "Allow"
+      Action:
+        - "sqs:SendMessage"
+      Resource:
+        - Fn::GetAtt: [ImageProcessorDLQ, Arn]
+functions:
+  main:
+    name: ${self:custom.lambdaNames.${self:provider.stage}}
+    handler: bootstrap
+    events:
+      - s3:
+          bucket: ${param:USER_IMAGES_BUCKET}
+          event: s3:ObjectCreated:*
+          existing: true
+    destinations:
+      onFailure: arn:aws:sqs:${self:provider.region}:${aws:accountId}:${self:custom.dlqNames.${self:provider.stage}}
+
+custom:
+  dotenv:
+    path: .env.${self:provider.stage}
+  lambdaNames:
+    dev: dev-image-metadata-processor
+    stg: stg-image-metadata-processor
+    prod: image-metadata-processor
+  dlqNames:
+    dev: dev-image-processor-dlq
+    stg: stg-image-processor-dlq
+    prod: image-processor-dlq
+
+resources:
+  Resources:
+    ImageProcessorDLQ:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ${self:custom.dlqNames.${self:provider.stage}}
+        MessageRetentionPeriod: 1209600 # 14 days
+package:
+  individually: true
+  exclude:
+    - "**" # Exclude everything
+  include:
+    - "bootstrap" # Include only the bootstrap file from the bin folder

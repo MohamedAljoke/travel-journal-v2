@@ -1,0 +1,58 @@
+{
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "applications/backend/lambda_rest_api/dist",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "applications/backend/lambda_rest_api/src/main.ts",
+        "tsConfig": "applications/backend/lambda_rest_api/tsconfig.app.json",
+        "assets": ["applications/backend/lambda_rest_api/src/assets"],
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "@travel-journal-v2/lambda_rest_api:build",
+        "runBuildTargetDependencies": false
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "@travel-journal-v2/lambda_rest_api:build:development"
+        },
+        "production": {
+          "buildTarget": "@travel-journal-v2/lambda_rest_api:build:production"
+        }
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+services:
+  userImagesDynamodb:
+    path: "./serverless_infra/user_images_dynamodb"
+  userImagesS3Bucket:
+    path: "./serverless_infra/user_images_s3_bucket"
+  cognitoAuth:
+    path: "./serverless_infra/cognito_auth"
+
+  travelJournalAuth:
+    path: "./applications/backend/lambda_rest_api"
+    dependsOn:
+      - userImagesDynamodb
+      - userImagesS3Bucket
+      - cognitoAuth
+    params:
+      COGNITO_USER_POOL_ARN: ${cognitoAuth.CognitoUserPoolArn}
+      DYNAMODB_TABLE_NAME: ${userImagesDynamodb.DynamodbTable}
+      USER_IMAGES_DYNAMO_TABLE_ARN: ${userImagesDynamodb.DynamodbTableArn}
+
+  imageMetadataProcessor:
+    path: "./lambdas/golang_lambdas/image_metadata_processor"
+    dependsOn:
+      - userImagesDynamodb
+      - userImagesS3Bucket
+    params:
+      DYNAMODB_TABLE_NAME: ${userImagesDynamodb.DynamodbTable}
+      USER_IMAGES_BUCKET: ${userImagesS3Bucket.S3BucketName}
+      USER_IMAGES_DYNAMO_TABLE: ${userImagesDynamodb.DynamodbTable}
