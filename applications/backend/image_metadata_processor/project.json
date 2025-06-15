@@ -1,0 +1,15 @@
+{
+  "name": "image-metadata",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "applications/backend/image_metadata_processor",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "GOOS=linux GOARCH=amd64 go build -o ../../../dist/applications/backend/image_metadata_processor/bootstrap .",
+        "cwd": "applications/backend/image_metadata_processor"
+      }
+    }
+  }
+}
