@@ -18,7 +18,7 @@ services:
       USER_IMAGES_DYNAMO_TABLE_ARN: ${userImagesDynamodb.DynamodbTableArn}
 
   imageMetadataProcessor:
-    path: "./lambdas/golang_lambdas/image_metadata_processor"
+    path: "./applications/backend/image_metadata_processor"
     dependsOn:
       - userImagesDynamodb
       - userImagesS3Bucket
@@ -26,3 +26,6 @@ services:
       DYNAMODB_TABLE_NAME: ${userImagesDynamodb.DynamodbTable}
       USER_IMAGES_BUCKET: ${userImagesS3Bucket.S3BucketName}
       USER_IMAGES_DYNAMO_TABLE: ${userImagesDynamodb.DynamodbTable}
+
+  frontendLandingPage:
+    path: "./applications/frontend/landing-page"

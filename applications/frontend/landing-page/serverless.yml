@@ -1,0 +1,27 @@
+service: travel-journal-frontend
+
+provider:
+  name: aws
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  client:
+    bucketName: travel-journal-frontend-${self:provider.stage}-${random:id}
+    distributionFolder: ./dist
+    indexDocument: index.html
+    errorDocument: index.html
+    # Enable CloudFront distribution
+    manageResources: true
+    # Custom domain (optional)
+    # domainName: your-domain.com
+    # certificateArn: arn:aws:acm:us-east-1:123456789:certificate/your-cert-id
+
+resources:
+  Outputs:
+    WebsiteURL:
+      Description: "Website URL"
+      Value: !GetAtt WebsiteCloudFrontDistribution.DomainName
+    S3BucketName:
+      Description: "S3 Bucket Name"
+      Value: !Ref WebsiteBucket

@@ -5,6 +5,12 @@
   "references": [
     {
       "path": "./applications/backend/lambda_rest_api"
+    },
+    {
+      "path": "./applications/frontend/landing-page"
+    },
+    {
+      "path": "./applications/frontend/gallery-app"
     }
   ]
 }

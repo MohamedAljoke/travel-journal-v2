@@ -19,7 +19,10 @@ go mod init github.com/MohamedAljoke/image_metadata_processor
 go mod tidy
 
 
+# frontend
+npx nx generate @nx/react:application landing-page --directory=applications/frontend/landing-page --routing=true --style=tailwind --bundler=vite
 
+pnpm add -w lucide-react 
 
 # backend lambdas authorizer
 npx nx generate @nx/node:application lambda-authorizer --directory=applications/backend/lambda-authorizer
