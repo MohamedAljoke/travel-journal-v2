@@ -1,7 +1,6 @@
 import { APIGatewayProxyResult } from "aws-lambda";
 import { DomainError } from "./application/domain/errors";
 import { logger } from "./shared/logger/logger";
-import { SentryExceptionCatcher } from "./shared/observability/sentry/execption.handler";
 
 export interface ILambdaHandlerResponse {
   body: any;
@@ -20,7 +19,6 @@ export const customHandler = async <TEvent>(
   handler: (event: TEvent) => Promise<ILambdaHandlerResponse>,
   event: TEvent
 ): Promise<APIGatewayProxyResult> => {
-  const exceptionCatcher = new SentryExceptionCatcher();
   try {
     const handlerResponse = await handler(event);
     return {
@@ -54,12 +52,7 @@ export const customHandler = async <TEvent>(
       message: `[INTERNAL-SERVER-ERROR]`,
       context: { error: error },
     });
-    exceptionCatcher.catchException({
-      exception: error as Error,
-      tags: {
-        functionName: "travel-journal",
-      },
-    });
+
     //todo: send to sentry? some place to get errors
     return {
       statusCode: 500,

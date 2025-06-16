@@ -2,11 +2,8 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["node"],
-    "rootDir": "src",
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo"
+    "module": "commonjs",
+    "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.json", "package.json"],
   "exclude": [

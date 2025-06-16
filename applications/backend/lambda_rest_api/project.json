@@ -8,15 +8,19 @@
         "platform": "node",
         "outputPath": "applications/backend/lambda_rest_api/dist",
         "format": ["cjs"],
-        "bundle": false,
+        "bundle": true,
+        "minify": false,
         "main": "applications/backend/lambda_rest_api/src/main.ts",
         "tsConfig": "applications/backend/lambda_rest_api/tsconfig.app.json",
         "assets": ["applications/backend/lambda_rest_api/src/assets"],
+        "thirdParty": true,
+        "generatePackageJson": false,
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {
             ".js": ".js"
-          }
+          },
+          "treeShaking": true
         }
       },
       "configurations": {

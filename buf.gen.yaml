@@ -1,0 +1,11 @@
+version: v1
+
+plugins:
+  - plugin: es
+    out: src/shared/types/proto-types/v1
+    opt: target=ts
+
+  - plugin: go
+    out: gen/go
+    opt:
+      - paths=source_relative

@@ -4,8 +4,9 @@
   "license": "MIT",
   "scripts": {
     "build": "nx run-many -t build",
-    "deploy:stg": "pnpm build && serverless deploy --stage stg",
-    "deploy": "pnpm build && serverless deploy --stage prod"
+    "deploy:dev": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh dev",
+    "deploy:stg": "chmod +x ./scripts/deploy.sh && ./scripts/deploy.sh stg",
+    "deploy:prod": "./scripts/deploy.sh prod"
   },
   "private": true,
   "devDependencies": {
@@ -44,7 +45,9 @@
     "nx": "21.2.0",
     "postcss": "8.4.38",
     "serverless": "^4.17.0",
+    "serverless-finch": "^4.0.4",
     "serverless-offline": "^14.4.0",
+    "serverless-scriptable-plugin": "^1.3.1",
     "tailwindcss": "3.4.3",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",
