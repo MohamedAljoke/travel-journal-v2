@@ -1,0 +1,110 @@
+service: app-travel-journal-frontend
+
+plugins:
+  - serverless-finch
+
+provider:
+  name: aws
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+
+custom:
+  client:
+    bucketName: app-travel-journal-frontend-${self:provider.stage}
+    distributionFolder: ./dist
+    indexDocument: index.html
+    errorDocument: index.html
+    manageResources: false
+
+resources:
+  Resources:
+    WebsiteBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: app-travel-journal-frontend-${self:provider.stage}
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerPreferred
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ["*"]
+              AllowedMethods: [GET, HEAD]
+              AllowedOrigins: ["*"]
+              MaxAge: 3000
+
+    WebsiteBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      DependsOn: WebsiteBucket
+      Properties:
+        Bucket: !Ref WebsiteBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: !Join
+                - ""
+                - - !GetAtt WebsiteBucket.Arn
+                  - "/*"
+
+    CloudFrontDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Origins:
+            - DomainName: !GetAtt WebsiteBucket.RegionalDomainName
+              Id: S3Origin
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: http-only
+          Enabled: true
+          DefaultRootObject: index.html
+          CustomErrorResponses:
+            - ErrorCode: 404
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+            - ErrorCode: 403
+              ResponseCode: 200
+              ResponsePagePath: /index.html
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - DELETE
+              - GET
+              - HEAD
+              - OPTIONS
+              - PATCH
+              - POST
+              - PUT
+            TargetOriginId: S3Origin
+            ForwardedValues:
+              QueryString: false
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+            MinTTL: 0
+            DefaultTTL: 86400
+            MaxTTL: 31536000
+
+  Outputs:
+    WebsiteURL:
+      Description: "Website URL"
+      Value: !GetAtt CloudFrontDistribution.DomainName
+    S3WebsiteURL:
+      Description: "S3 Website URL"
+      Value: !GetAtt WebsiteBucket.WebsiteURL
+    CloudFrontDistribution:
+      Description: "CloudFront Distribution ID"
+      Value: !Ref CloudFrontDistribution
+    S3BucketName:
+      Description: "S3 Bucket Name"
+      Value: !Ref WebsiteBucket

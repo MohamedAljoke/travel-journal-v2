@@ -29,3 +29,6 @@ services:
 
   frontendLandingPage:
     path: "./applications/frontend/landing-page"
+
+  frontendAppSystem:
+    path: "./applications/frontend/gallery-app"
