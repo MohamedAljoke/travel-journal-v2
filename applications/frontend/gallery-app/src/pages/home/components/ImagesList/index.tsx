@@ -1,22 +1,14 @@
 import ImageGrid from "./components/GridView";
 import ImageList from "./components/ListView";
+import { Image, ViewMode } from "../../../../types";
 
-export interface Image {
-  id: number;
-  src: string;
-  title: string;
-  category: string;
-  date: string;
-  size: string;
-  liked: boolean;
-}
-type Params = {
+interface ImagesViewProps {
   images: Image[];
   selectedImages: number[];
   onImageSelect: (id: number) => void;
   onImageClick: (image: Image) => void;
-  currentView: "grid" | "list";
-};
+  currentView: ViewMode;
+}
 
 const ImagesView = ({
   currentView,
@@ -24,7 +16,7 @@ const ImagesView = ({
   images,
   selectedImages,
   onImageSelect,
-}: Params) => {
+}: ImagesViewProps) => {
   if (currentView === "grid") {
     return (
       <ImageGrid
@@ -44,6 +36,7 @@ const ImagesView = ({
       />
     );
   }
+  return null;
 };
 
 export default ImagesView;
