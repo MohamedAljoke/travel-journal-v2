@@ -3,10 +3,11 @@ import EmptyState from "./components/EmptyState";
 import Header from "./components/Header";
 import QuickActions from "./components/Actions";
 import UploadArea from "./components/UploadArea";
-import ImagesView, { Image } from "./components/ImagesList";
+import ImagesView from "./components/ImagesList";
 import Categories, { CategoryType } from "./components/Categories";
 import LightBox from "./components/LightBoxImage";
 import FiltersBar from "./components/FiltersBar";
+import { Image } from "../../types";
 
 interface ApiImage {
   PK: string;
