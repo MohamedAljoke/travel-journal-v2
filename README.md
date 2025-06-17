@@ -1,109 +1,79 @@
-# TravelJournalV2
+# Travel Journal - Serverless Image Backup Service
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A scalable, serverless image upload and backup system built on AWS that allows users to securely store and manage their photos with automatic processing and metadata extraction.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## 🏗️ Architecture Overview
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+![Travel Journal Architecture](./design.png)
 
-## Generate a library
+The system is built using AWS serverless technologies with the following components:
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
-```
+- **Frontend**: React application deployed via CloudFront
+- **Authentication**: AWS Cognito for user management
+- **API Layer**: Node.js Lambda functions with API Gateway
+- **Storage**: S3 bucket for image storage with pre-signed URLs
+- **Processing**: Golang Lambda for image metadata extraction
+- **Database**: DynamoDB for metadata storage
+- **Error Handling**: SQS dead letter queue for failed operations
+- **Infrastructure**: Serverless Framework v4 with compose functionality
 
-## Run tasks
+## ✨ Key Features
 
-To build the library use:
+- **Bypass API Gateway Limitations**: Upload images larger than 10MB using S3 pre-signed URLs
+- **Secure Authentication**: JWT-based authentication with AWS Cognito
+- **Automatic Image Processing**: Extract and store metadata using Golang Lambda
+- **Error Recovery**: Dead letter queue handling for failed operations
+- **Content Delivery**: CloudFront distribution for fast image serving
+- **Scalable Architecture**: Pay-per-use serverless infrastructure
+- **Infrastructure as Code**: Complete deployment automation with Serverless Framework
 
-```sh
-npx nx build pkg1
-```
+## 🛠️ Services Overview
 
-To run any task with Nx use:
+### API Service (Node.js)
 
-```sh
-npx nx <target> <project-name>
-```
+- **Route**: `/get-upload-url` - Generate pre-signed URLs for S3 uploads
+- **Route**: `/user/files` - List user's uploaded images
+- **Authentication**: Cognito JWT authorizer
+- **Runtime**: Node.js 18.x
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+### Image Processor Service (Golang)
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- **Trigger**: S3 object creation events
+- **Function**: Extract image metadata
+- **Storage**: Save metadata to DynamoDB
+- **Error Handling**: Failed operations sent to SQS dead letter queue
+- **Runtime**: Go 1.x
 
-## Versioning and releasing
+### Authentication Service
 
-To version and release the library use
+- **Provider**: AWS Cognito User Pool
+- **Features**: User registration, login, JWT token management
+- **Free Tier**: 50,000 monthly active users
 
-```
-npx nx release
-```
+## 📊 Cost Optimization
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+This project is designed with cost efficiency in mind:
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- **Lambda**: Pay only for execution time
+- **S3**: Standard storage pricing with intelligent tiering
+- **DynamoDB**: On-demand billing for variable workloads
+- **Cognito**: 50,000 free monthly active users
+- **API Gateway**: Pay per API call
+- **CloudFront**: Free tier includes 1TB data transfer
 
-## Keep TypeScript project references up to date
+### Error Handling
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+- Failed image processing operations are sent to SQS dead letter queue
+- Check queue for unprocessed items: `travel-journal-dlq`
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+## ⚡ Tech Stack
 
-```sh
-npx nx sync
-```
-
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
-
-```sh
-npx nx sync:check
-```
-
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **Backend**: Node.js, AWS Lambda
+- **Processing**: Golang
+- **Database**: DynamoDB
+- **Storage**: S3
+- **Authentication**: AWS Cognito
+- **Infrastructure**: Serverless Framework v4
+- **Monitoring**: CloudWatch
+- **Message Queue**: SQS
