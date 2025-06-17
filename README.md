@@ -1,7 +1,7 @@
 # Travel Journal - Serverless Image Backup Service
 
 A scalable, serverless image upload and backup system built on AWS that allows users to securely store and manage their photos with automatic processing and metadata extraction.
-
+[Video explanation](https://www.loom.com/share/1f6a4cbaf4ad457bb44ab347971a0df2)
 ## 🏗️ Architecture Overview
 
 ![Travel Journal Architecture](./design.png)
