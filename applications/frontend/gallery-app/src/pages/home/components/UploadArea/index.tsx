@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { Upload, X, Check, AlertCircle } from "lucide-react";
+import { useUploadImage } from "../../../../hooks/useUploadImage";
 
 interface UploadAreaProps {
   isDragging: boolean;
@@ -9,12 +10,6 @@ interface UploadAreaProps {
   onUploadComplete?: () => void; // Callback to refresh gallery
 }
 
-interface UploadProgress {
-  file: File;
-  progress: number;
-  status: "uploading" | "completed" | "error";
-  error?: string;
-}
 
 const UploadArea = ({
   isDragging,
@@ -23,182 +18,9 @@ const UploadArea = ({
   onDrop,
   onUploadComplete,
 }: UploadAreaProps) => {
-  const [uploads, setUploads] = useState<UploadProgress[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+  const { uploads, isUploading, uploadFiles } = useUploadImage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get presigned URL from API
-  const getPresignedUrl = async (
-    objectKey: string,
-    contentType: string
-  ): Promise<string> => {
-    const token = sessionStorage.getItem("idToken");
-
-    if (!token) {
-      throw new Error("No authentication token found");
-    }
-
-    const response = await fetch(
-      "https://50j8fgincj.execute-api.us-east-1.amazonaws.com/stg/v1/get-upload-url",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          objectKey,
-          contentType,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get upload URL: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.uploadUrl;
-  };
-
-  // Upload file to S3 using presigned URL
-  const uploadToS3 = async (
-    file: File,
-    uploadUrl: string,
-    onProgress: (progress: number) => void
-  ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-
-      xhr.open("PUT", uploadUrl, true);
-      xhr.setRequestHeader("Content-Type", file.type); // e.g., image/jpeg
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          onProgress(percent);
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status === 200 || xhr.status === 204) {
-          resolve();
-        } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      };
-
-      xhr.onerror = () => {
-        reject(new Error("Network error occurred during file upload"));
-      };
-
-      xhr.send(file); // binary content
-    });
-  };
-  // Generate object key for S3
-  const generateObjectKey = (file: File): string => {
-    const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(2, 15);
-    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    return `uploads/${timestamp}-${randomId}.${extension}`;
-  };
-
-  // Handle file upload process
-  const handleFileUpload = async (files: FileList) => {
-    if (!files.length) return;
-
-    const validFiles = Array.from(files).filter((file) => {
-      const isImage = file.type.startsWith("image/");
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
-
-      if (!isImage) {
-        alert(`${file.name} is not a valid image file`);
-        return false;
-      }
-
-      if (!isValidSize) {
-        alert(`${file.name} is too large. Maximum size is 10MB`);
-        return false;
-      }
-
-      return true;
-    });
-
-    if (!validFiles.length) return;
-
-    setIsUploading(true);
-
-    // Initialize upload progress for all files
-    const initialUploads: UploadProgress[] = validFiles.map((file) => ({
-      file,
-      progress: 0,
-      status: "uploading" as const,
-    }));
-
-    setUploads(initialUploads);
-
-    // Upload files concurrently
-    const uploadPromises = validFiles.map(async (file, index) => {
-      try {
-        const objectKey = generateObjectKey(file);
-        const contentType = file.type || "image/jpeg";
-
-        // Get presigned URL
-        const uploadUrl = await getPresignedUrl(objectKey, contentType);
-
-        // Upload to S3
-        await uploadToS3(file, uploadUrl, (progress) => {
-          setUploads((prev) =>
-            prev.map((upload, i) =>
-              i === index ? { ...upload, progress } : upload
-            )
-          );
-        });
-
-        // Mark as completed
-        setUploads((prev) =>
-          prev.map((upload, i) =>
-            i === index
-              ? { ...upload, status: "completed", progress: 100 }
-              : upload
-          )
-        );
-      } catch (error) {
-        console.error(`Upload failed for ${file.name}:`, error);
-        setUploads((prev) =>
-          prev.map((upload, i) =>
-            i === index
-              ? {
-                  ...upload,
-                  status: "error",
-                  error:
-                    error instanceof Error ? error.message : "Upload failed",
-                }
-              : upload
-          )
-        );
-      }
-    });
-
-    await Promise.allSettled(uploadPromises);
-    setIsUploading(false);
-
-    // Check if any uploads completed successfully
-    const hasSuccessfulUploads = uploads.some(
-      (upload) => upload.status === "completed"
-    );
-    if (hasSuccessfulUploads && onUploadComplete) {
-      // Wait a moment for S3 consistency, then refresh gallery
-      setTimeout(() => {
-        onUploadComplete();
-      }, 1000);
-    }
-
-    // Clear uploads after 3 seconds
-    setTimeout(() => {
-      setUploads([]);
-    }, 3000);
-  };
 
   // Handle browse files click
   const handleBrowseClick = () => {
@@ -208,7 +30,7 @@ const UploadArea = ({
   // Handle file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      handleFileUpload(e.target.files);
+      uploadFiles(e.target.files, onUploadComplete);
     }
   };
 
@@ -228,7 +50,7 @@ const UploadArea = ({
     onDrop(e);
 
     if (e.dataTransfer.files) {
-      handleFileUpload(e.dataTransfer.files);
+      uploadFiles(e.dataTransfer.files, onUploadComplete);
     }
   };
 
@@ -250,7 +72,7 @@ const UploadArea = ({
           </div>
           <h3 className="text-white font-semibold mb-2">Upload Photos</h3>
           <p className="text-white/60 text-sm mb-4">
-            Drag & drop or click to select
+            Drag & drop images or zip files, or click to select
           </p>
           <button
             className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm hover:from-purple-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -266,7 +88,7 @@ const UploadArea = ({
           ref={fileInputRef}
           type="file"
           multiple
-          accept="image/*"
+          accept="image/*,.zip"
           onChange={handleFileInputChange}
           className="hidden"
         />

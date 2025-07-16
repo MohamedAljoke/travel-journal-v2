@@ -23,6 +23,7 @@ export class PreSignedS3Url {
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: objectKey,
+      ContentType: contentType,
     });
 
     const signedUrl = await getSignedUrl(this.s3, command, {

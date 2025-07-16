@@ -124,3 +124,9 @@ resources:
           Ref: ApiGatewayRestApi
         ProviderARNs:
           - ${param:COGNITO_USER_POOL_ARN}
+
+  Outputs:
+    ApiGatewayUrl:
+      Description: "API Gateway URL"
+      Value:
+        Fn::Sub: "https://${ApiGatewayRestApi}.execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}"

@@ -20,10 +20,48 @@ resources:
       Properties:
         BucketName: ${self:custom.s3BucketNames.${self:provider.stage}}
         PublicAccessBlockConfiguration:
-          BlockPublicAcls: true
-          BlockPublicPolicy: true
-          IgnorePublicAcls: true
-          RestrictPublicBuckets: true
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              AllowedOrigins:
+                - "*"
+              ExposedHeaders:
+                - last-modified
+                - content-length
+                - etag
+                - x-amz-version-id
+                - content-type
+                - x-amz-request-id
+                - x-amz-id-2
+                - date
+                - x-amz-cf-id
+                - x-amz-storage-class
+                - access-control-expose-headers
+              MaxAge: 3000
+
+    TravelJournalBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref TravelJournalBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action: s3:GetObject
+              Resource: !Sub "${TravelJournalBucket}/*"
 
   Outputs:
     S3BucketName:

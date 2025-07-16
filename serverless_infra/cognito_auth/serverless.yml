@@ -55,3 +55,13 @@ resources:
         Fn::GetAtt:
           - CognitoUserPool
           - Arn
+
+    CognitoUserPoolId:
+      Description: "Cognito User Pool ID"
+      Value:
+        Ref: CognitoUserPool
+
+    CognitoClientId:
+      Description: "Cognito User Pool Client ID"
+      Value:
+        Ref: CognitoUserPoolClient

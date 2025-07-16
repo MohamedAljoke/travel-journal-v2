@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { env } from "../config/env";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -18,9 +19,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Replace with your actual Cognito Client ID
-  const COGNITO_CLIENT_ID = "436suuillsg3bce19prqjlqqt7"; //todo: put in env
-  const COGNITO_ENDPOINT = "https://cognito-idp.us-east-1.amazonaws.com/";
+  const COGNITO_CLIENT_ID = env.cognito.clientId;
+  const COGNITO_ENDPOINT = env.cognito.endpoint;
 
   useEffect(() => {
     // Check if user is already logged in (check in-memory storage)

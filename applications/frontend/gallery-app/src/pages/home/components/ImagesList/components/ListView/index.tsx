@@ -1,5 +1,5 @@
 import { Download, Eye, Share2 } from "lucide-react";
-import { Image } from "../..";
+import { Image } from "../../../../../../types";
 
 interface ImageListProps {
   images: Image[];

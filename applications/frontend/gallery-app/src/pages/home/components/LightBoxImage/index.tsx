@@ -1,5 +1,5 @@
 import { Download, Heart, Share2, X } from "lucide-react";
-import { Image } from "../ImagesList";
+import { Image } from "../../../../types";
 
 interface LightboxProps {
   image: Image;
